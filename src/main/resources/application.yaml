@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: ai-manager
+  main:
+    web-application-type: reactive
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/aimanager
+    username: myuser
+    password: secret
+  datasource:
+    url: jdbc:postgresql://localhost:5432/aimanager
+    username: myuser
+    password: secret
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        model: llama3.1:8b
+      embedding:
+        model: nomic-embed-text
+
+app:
+  rag:
+    top-k: 5

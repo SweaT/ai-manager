@@ -1,15 +1,36 @@
 services:
   ollama:
     image: 'ollama/ollama:latest'
+    container_name: ai-manager-ollama
     ports:
-      - '11434'
+      - '11434:11434'
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ['CMD', 'ollama', 'list']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   pgvector:
     image: 'pgvector/pgvector:pg16'
+    container_name: ai-manager-pgvector
     environment:
-      - 'POSTGRES_DB=mydatabase'
+      - 'POSTGRES_DB=aimanager'
       - 'POSTGRES_PASSWORD=secret'
       - 'POSTGRES_USER=myuser'
     labels:
       - "org.springframework.boot.service-connection=postgres"
     ports:
-      - '5432'
+      - '5432:5432'
+    volumes:
+      - pgvector-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U myuser -d aimanager']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ollama-data:
+  pgvector-data:
