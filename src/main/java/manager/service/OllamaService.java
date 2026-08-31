@@ -1,20 +1,27 @@
-package manager.ollama;
+package manager.service;
 
+import manager.dto.ollama.request.ChatRequest;
+import manager.dto.ollama.request.EmbedRequest;
+import manager.dto.ollama.response.ChatResponse;
+import manager.dto.ollama.response.EmbedResponse;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-@Component
-public class OllamaClient {
+/**
+ * Сервис отвечает за взаимодействие с api Ollama
+ */
+@Service
+public class OllamaService {
 
     private final WebClient webClient;
     private final String chatModel;
     private final String embeddingModel;
 
-    public OllamaClient(
+    public OllamaService(
             WebClient.Builder webClientBuilder,
             @Value("${spring.ai.ollama.base-url}") String baseUrl,
             @Value("${spring.ai.ollama.chat.model}") String chatModel,
@@ -43,22 +50,4 @@ public class OllamaClient {
                 .map(response -> response.message().content());
     }
 
-    private record EmbedRequest(String model, String input) {
-    }
-
-    private record EmbedResponse(List<List<Double>> embeddings) {
-    }
-
-    private record ChatRequest(String model, List<Message> messages, boolean stream) {
-
-        private static ChatRequest forUserPrompt(String model, String prompt) {
-            return new ChatRequest(model, List.of(new Message("user", prompt)), false);
-        }
-    }
-
-    private record ChatResponse(Message message) {
-    }
-
-    private record Message(String role, String content) {
-    }
 }
