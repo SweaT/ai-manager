@@ -1,4 +1,4 @@
-package manager.chat.api.dto;
+package manager.dto.chat.request;
 
 public record ChatRequest(
         String sessionId,

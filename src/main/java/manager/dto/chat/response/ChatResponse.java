@@ -1,12 +1,12 @@
-package manager.chat.api.dto;
+package manager.dto.chat.response;
 
-import manager.rag.model.KnowledgeChunk;
+import manager.db.model.Chunk;
 
 import java.util.List;
 
 public record ChatResponse(
         String sessionId,
         String answer,
-        List<KnowledgeChunk> sources
+        List<Chunk> sources
 ) {
 }
