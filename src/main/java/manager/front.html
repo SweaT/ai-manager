@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Чат</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #1e1e2f; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .chat-container { width: 420px; max-width: 95%; background: #2d2d44; border-radius: 16px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        .chat-box { height: 420px; overflow-y: auto; margin-bottom: 16px; padding: 12px; background: #3a3a55; border-radius: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .message { padding: 10px 14px; border-radius: 18px; max-width: 80%; word-wrap: break-word; animation: fadeIn 0.3s; }
+        .user { background: #4f8ef7; color: white; align-self: flex-end; }
+        .bot { background: #444466; color: #eee; align-self: flex-start; }
+        .input-area { display: flex; gap: 10px; }
+        input { flex: 1; padding: 12px; border: none; border-radius: 30px; background: #3a3a55; color: white; outline: none; }
+        button { padding: 12px 24px; border: none; border-radius: 30px; background: #4f8ef7; color: white; font-weight: bold; cursor: pointer; }
+        button:hover { background: #3a7ae8; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .typing { color: #aaa; font-style: italic; align-self: flex-start; padding: 10px; }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-box" id="chatBox"></div>
+        <div class="input-area">
+            <input type="text" id="msgInput" placeholder="Введите сообщение..." />
+            <button onclick="sendMessage()">→</button>
+        </div>
+    </div>
+
+    <script>
+        // ========== НАСТРОЙКИ ПОД ВАШ БЭКЕНД ==========
+        const API_URL = 'http://localhost:8080/api/chat';  // ← ваш URL
+        
+        // Функция формирования JSON-запроса (под ваш API)
+        function buildRequestPayload(userMessage) {
+            return {
+                message: userMessage
+                // добавьте любые другие поля, которые ждёт ваш бэк
+                // Например:
+                // session_id: 'abc123',
+                // timestamp: Date.now()
+            };
+        }
+
+        // Функция парсинга ответа (извлечение текста из вашего JSON)
+        function parseReplyFromResponse(responseData) {
+            // Пример 1: если ответ приходит как { "reply": "текст" }
+            return responseData.answer;
+            
+            // Пример 2: если ответ { "data": { "result": "текст" } }
+            // return responseData.data?.result || 'Нет ответа';
+            
+            // Пример 3: если ответ { "choices": [ { "message": { "content": "текст" } } ] }
+            // return responseData.choices?.[0]?.message?.content || 'Нет ответа';
+        }
+        // ===============================================
+
+        async function sendMessage() {
+            const input = document.getElementById('msgInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            input.value = '';
+            addMessage('user', msg);
+            
+            const typingId = addTypingIndicator();
+
+            try {
+                const payload = buildRequestPayload(msg);
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Если нужны заголовки авторизации:
+                        // 'Authorization': 'Bearer your-token'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                removeTypingIndicator(typingId);
+
+                const replyText = parseReplyFromResponse(data);
+                addMessage('bot', replyText || '⚠️ Пустой ответ');
+
+            } catch (error) {
+                removeTypingIndicator(typingId);
+                addMessage('bot', '❌ Ошибка: ' + error.message);
+            }
+        }
+
+        // ===== Вспомогательные функции =====
+        function addMessage(role, text) {
+            const chatBox = document.getElementById('chatBox');
+            const div = document.createElement('div');
+            div.className = 'message ' + role;
+            div.textContent = text;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function addTypingIndicator() {
+            const chatBox = document.getElementById('chatBox');
+            const div = document.createElement('div');
+            div.className = 'typing';
+            div.textContent = '⏳ Печатает...';
+            div.dataset.typingId = Date.now();
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return div.dataset.typingId;
+        }
+
+        function removeTypingIndicator(id) {
+            const chatBox = document.getElementById('chatBox');
+            const typing = chatBox.querySelector(`[data-typing-id="${id}"]`);
+            if (typing) typing.remove();
+        }
+
+        // Отправка по Enter
+        document.getElementById('msgInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>

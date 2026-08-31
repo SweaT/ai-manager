@@ -36,7 +36,7 @@ public class RagService {
 
     public Flux<Chunk> upload(Document document) {
         return readFileContent(document.sourcePath())// Шаг 1
-                .flatMap(content -> saveDocument(document.title(), content)// Шаг 2
+                .flatMap(content -> saveDocument(document.title(), document.sourcePath())// Шаг 2
                         .map(doc -> splitToChunks(content, doc.id())) // Шаг 3-4
                 ).flatMapIterable(list -> list)  // Раскрываем Mono<List<Chunk>> в Flux<Chunk>
                 .flatMap(this::saveChunk);
@@ -68,9 +68,9 @@ public class RagService {
     }
 
     // Шаг 2: Сохраняем документ в БД и получаем его ID
-    private Mono<Document> saveDocument(String title, String content) {
+    private Mono<Document> saveDocument(String title, String path) {
         // R2DBC репозиторий возвращает Mono<Document> с заполненным ID
-        return knowledgeChunkRepository.uploadDocument(title, content)
+        return knowledgeChunkRepository.uploadDocument(title, path)
                 .doOnNext(doc -> log.info("saved document {}", doc));
     }
 

@@ -7,10 +7,7 @@ import manager.dto.chat.request.ChatRequest;
 import manager.dto.chat.response.ChatResponse;
 import manager.service.ChatService;
 import manager.service.RagService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -23,6 +20,8 @@ public class AiManagerController {
     private final RagService ragService;
 
     @PostMapping("/chat")
+    //TODO: Убрать как натестируюсь
+    @CrossOrigin(origins = "*")
     public Mono<ChatResponse> chat(@RequestBody Mono<ChatRequest> request) {
         return request.log().flatMap(chatService::answer);
     }
